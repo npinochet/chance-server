@@ -163,8 +163,8 @@ function getUser(email, callback){
 		users.find({"email":email}).toArray((err, res) => {
 			if(err) throw err;
 			if (res.length > 0){
-				user = res[0];
-				callback(user);
+
+				callback(res[0]);
 			}else{
 				callback(null);
 			};

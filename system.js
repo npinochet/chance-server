@@ -120,7 +120,7 @@ function getLastTimeAd(email){
 
 function newUser(obj){
 
-	print(obj);
+	console.log("user: "+JSON.stringify(obj));
 
 	let newUser = {};
 	newUser.email = obj.email;

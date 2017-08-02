@@ -120,14 +120,18 @@ function getLastTimeAd(email){
 
 function newUser(obj){
 
+	print(obj);
+
 	let newUser = {};
 	newUser.email = obj.email;
 	newUser.chance = 0;
+	newUser.name = obj.name;
 	newUser.displayName = obj.displayName;
 	newUser.familyName = obj.familyName;
 	newUser.givenName = obj.givenName;
+	newUser.id = obj.id;
 	newUser.accessDate = new Date();
-	newUser.lastAd = "none";
+	newUser.lastAd = null;
 
 	return newUser;
 
@@ -190,7 +194,7 @@ function alertWinner(){ /////
 
 	//send email
 
-	maindata.lastWinner = winner.givenName+" "+winner.familyName+" "+winner.email;
+	maindata.lastWinner = winner.name+" "+winner.email;
 	fs.writeFile("data.json", JSON.stringify(maindata), function(err) {
 		if (err) {return console.log(err);}
 	});

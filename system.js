@@ -35,6 +35,8 @@ function access(obj){
 
 	let user = getUser(obj.email);
 
+	console.log("userLOL "+JSON.stringify(user));
+
 	if (user == false){  //user doesn't exists
 
 		user = newUser(obj);
@@ -120,8 +122,6 @@ function getLastTimeAd(email){
 
 function newUser(obj){
 
-	console.log("user: "+JSON.stringify(obj));
-
 	let newUser = {};
 	newUser.email = obj.email;
 	newUser.chance = 0;
@@ -141,13 +141,17 @@ function getUser(email){
 
 	var user = false;
 
+	console.log("email: "+JSON.stringify(email));
+
 	mongodb.MongoClient.connect(mongo_uri, (err, db) => {
 		if(err) throw err;
 		var users = db.collection("users");
 		users.find({"email":email}).toArray((err, res) => {
+			console.log("resIMPOrtant "+JSON.stringify(res));
 			if(err) throw err;
 			if (res.length > 0){
 				user = res[0];
+				console.log("user CHANGED!!!!!!!");
 			};
 			db.close(function (err) {
 				if(err) throw err;

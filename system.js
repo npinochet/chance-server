@@ -31,36 +31,35 @@ function getLastTime(endtime, until){
 	return {'total': t,'days': days,'hours': hours,'minutes': minutes,'seconds': seconds};
 }
 
-function access(obj){
+function access(obj, callback){
 
-	let user = getUser(obj.email);
+	getUser(obj.email, (user) =>{
+		if (user == false){  //user doesn't exists
 
-	console.log("userLOL "+JSON.stringify(user));
+			user = newUser(obj);
 
-	if (user == false){  //user doesn't exists
-
-		user = newUser(obj);
-
-		mongodb.MongoClient.connect(mongo_uri, (err, db) => {
-			if(err) throw err;
-			var users = db.collection("users");
-			users.insertOne(user, (err, cursor) => {
+			mongodb.MongoClient.connect(mongo_uri, (err, db) => {
 				if(err) throw err;
-				db.close(function (err) {
+				var users = db.collection("users");
+				users.insertOne(user, (err, cursor) => {
 					if(err) throw err;
+					db.close(function (err) {
+						if(err) throw err;
+					});
 				});
 			});
-		});
 
-	}else{
-		user.accessDate = new Date();
-	};
+		}else{
+			user.accessDate = new Date();
+		};
 
-	return user;
+		callback(user);
+
+	});
 
 };
 
-function updateData(email){
+function updateData(email, callback){
 
 	let up = {};
 
@@ -68,55 +67,62 @@ function updateData(email){
 	up.resultLimit = maindata.resultLimit;
 	up.lastWinner = maindata.lastWinner;
 
-	if (email != undefined){
-		var user = getUser(email);
-		up.chance = user.chance
-	};
-
 	if (checkLimit(up) == false){
-		up = updateData(email);
+		up = updateData(email, callback);
 	};
 
-	return up
+	if (email != undefined){
+		getUser(email, (user) => {
+			up.chance = user.chance			
+			callback(up);
+		});
+	}else{
+		callback(up);
+	};
 
 };
 
-function ad(email){
+function ad(email, callback){
 
-	var user = getUser(email);
+	getUser(email, (user)=>{
 
-	if (user.lastAd == "none" || getLastTime(user.lastAd, -1).hours >= 12){
-		user.lastAd = new Date();
-		user.chance = user.chance+1;
+		if (user.lastAd == "none" || getLastTime(user.lastAd, -1).hours >= 12){
+			user.lastAd = new Date();
+			user.chance = user.chance+1;
 
-		mongodb.MongoClient.connect(mongo_uri, (err, db) => {
-			if(err) throw err;
-			var users = db.collection("users");
-			users.update({"email":user.email}, {$inc:{"chance":1}}, (err, cursor) => {
+			mongodb.MongoClient.connect(mongo_uri, (err, db) => {
 				if(err) throw err;
-				db.close(function (err) {
+				var users = db.collection("users");
+				users.update({"email":user.email}, {$inc:{"chance":1}}, (err, cursor) => {
 					if(err) throw err;
+					db.close(function (err) {
+						if(err) throw err;
+					});
 				});
 			});
-		});
 
-		return user.chance
-	}else{
-		return false
-	};
+			callback(user.chance);
+			
+		}else{
+			callback(false);
+		};
+
+	});
 
 };
 
-function getLastTimeAd(email){
+function getLastTimeAd(email, callback){
 
-	let user = getUser(email);
-	let t = getLastTime(user.lastAd, -1);
+	getUser(email, (user)=>{
+		let t = getLastTime(user.lastAd, -1);
+		if (user.lastAd == "none" || t.hours >= 12){
+			callback(true);
+		}else{
+			callback(Date.parse(Date()) - Date.parse(user.lastAd));
+		};
 
-	if (user.lastAd == "none" || t.hours >= 12){
-		return true
-	}else{
-		return (Date.parse(Date()) - Date.parse(user.lastAd));
-	};
+	});
+	
 
 };
 
@@ -137,11 +143,7 @@ function newUser(obj){
 
 };
 
-function getUser(email){
-
-	var user = false;
-
-	console.log("email: "+JSON.stringify(email));
+function getUser(email, callback){
 
 	mongodb.MongoClient.connect(mongo_uri, (err, db) => {
 		if(err) throw err;
@@ -151,15 +153,15 @@ function getUser(email){
 			if(err) throw err;
 			if (res.length > 0){
 				user = res[0];
-				console.log("user CHANGED!!!!!!!");
+				callback(user);
+			}else{
+				callback(null);
 			};
-			db.close(function (err) {
+			db.close(function (err){
 				if(err) throw err;
 			});
 		});
 	});
-
-	return user;
 };
 
 function checkLimit(up){
@@ -182,38 +184,37 @@ function alertWinner(){ /////
 
 	//pick a random winner
 
-	var winner;
-
 	mongodb.MongoClient.connect(mongo_uri, (err, db) => {
 		if(err) throw err;
 		var users = db.collection("users");
 		users.aggregate({$sample: {size:1}}).toArray((err, res) => {
 			if(err) throw err;
-			winner = res[0];
+			var winner = res[0];
 			db.close(function (err){
 				if(err) throw err;
 			});
+
+			//send email
+
+			maindata.lastWinner = winner.name+" "+winner.email;
+			fs.writeFile("data.json", JSON.stringify(maindata), function(err) {
+				if (err) {return console.log(err);}
+			});
+
+			let body = JSON.stringify(winner);
+
+			let mailOptions = {
+				from: '"Digi Lotto" <node-server@bdigi-lotto.com>',
+				to: "n.pinochet@hotmail.com",
+				subject: "digi lotto winner",
+				text:body+" jackpot:"+maindata.jackpot.toString(),
+			};
+
+			mailer.sendMail(mailOptions, (error, info) => {if (error) {return console.log(error);}
+				console.log('Message %s sent: %s', info.messageId, info.response);
+			});
+
 		});
-	});
-
-	//send email
-
-	maindata.lastWinner = winner.name+" "+winner.email;
-	fs.writeFile("data.json", JSON.stringify(maindata), function(err) {
-		if (err) {return console.log(err);}
-	});
-
-	let body = JSON.stringify(winner);
-
-	let mailOptions = {
-		from: '"Digi Lotto" <node-server@bdigi-lotto.com>',
-		to: "n.pinochet@hotmail.com",
-		subject: "digi lotto winner",
-		text:body+" jackpot:"+maindata.jackpot.toString(),
-	};
-
-	mailer.sendMail(mailOptions, (error, info) => {if (error) {return console.log(error);}
-		console.log('Message %s sent: %s', info.messageId, info.response);
 	});
 
 };

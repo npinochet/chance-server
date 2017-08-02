@@ -21,8 +21,9 @@ app.get("/ad",function(req, res){
 
 	console.log("accessed: /ad "+req.query.email);
 
-	let chance = sys.ad(req.query.email);
-	res.json({"chance":chance});
+	sys.ad(req.query.email, (chance)=>{
+		res.json({"chance":chance});
+	});
 
 });
 
@@ -35,8 +36,9 @@ app.get("/update",function(req, res){
 		console.log("accessed: /update");
 	};
 
-	up = sys.updateData(req.query.email);
-	res.json(up);
+	sys.updateData(req.query.email, (up)=>{
+		res.json(up);
+	});
 
 });
 
@@ -44,8 +46,9 @@ app.get("/lastTimeAd",function(req, res){
 
 	console.log("accessed: /lastTimeAd "+req.query.email);
 
-	mili = sys.getLastTimeAd(req.query.email);
-	res.json({"mili":mili});
+	sys.getLastTimeAd(req.query.email, (mili) =>{
+		res.json({"mili":mili});
+	});
 
 });
 
@@ -53,13 +56,13 @@ app.post("/login", function(req, res){
 
 	console.log("accessed: /login "+req.body.email);
 
-	user = sys.access(req.body);
-	up = sys.updateData();
-
-	up.chance = user.chance;
-
-	res.json(up);
-
+	sys.access(req.body, (user) => {
+		up = sys.updateData(null, (up)=>{
+			up.chance = user.chance;
+			res.json(up);
+		});
+	});
+	
 });
 
 app.listen(port,null,function(){ 

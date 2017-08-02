@@ -1,1 +1,6 @@
-{"resultLimit":"200000","jackpot":20000,"lastWinner":"undefined undefined"}
+{
+	"resultLimit":"200000",
+	"jackpot":30000,
+	"lastWinner":"undefined undefined",
+	"jackpotMin":20000
+}

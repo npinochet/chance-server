@@ -1,6 +1,7 @@
 
-let nodemailer = require('nodemailer');
+let maindata = require("./data.json");
 
+let nodemailer = require('nodemailer');
 let mailer = nodemailer.createTransport({
 	service: "gmail",
 	auth: {
@@ -9,25 +10,45 @@ let mailer = nodemailer.createTransport({
 	}
 });
 
+var fs = require("fs");
 
-let utils = require("./utils.js");
-
-let database = require("./database.json");
-let maindata = require("./data.json");
-
-var threadLock = false;
+var mongo = require('mongodb');
+var mongo_uri = process.env.MONGODB_URI;
 
 
+
+function getLastTime(endtime, until){
+
+	if (until == undefined){
+		until = -1;
+	}
+	
+	var t = (Date.parse(endtime) - Date.parse(Date()))*until;
+	var seconds = Math.floor( (t/1000) % 60 );
+	var minutes = Math.floor( (t/1000/60) % 60 );
+	var hours = Math.floor( (t/(1000*60*60)) % 24 );
+	var days = Math.floor( t/(1000*60*60*24) );
+	return {'total': t,'days': days,'hours': hours,'minutes': minutes,'seconds': seconds};
+}
 
 function access(obj){
 
 	let user = getUser(obj.email);
 
-	if (user == false){ // user doesn't exists
+	if (user == false){  //user doesn't exists
 
 		user = newUser(obj);
-		database.push(user);
-		utils.saveDatabase(database);
+
+		mongodb.MongoClient.connect(mongo_uri, (err, db) => {
+			if(err) throw err;
+			var users = db.collection("users");
+			users.insertOne(user, (err, cursor) => {
+				if(err) throw err;
+				db.close(function (err) {
+					if(err) throw err;
+				});
+			});
+		});
 
 	}else{
 		user.accessDate = new Date();
@@ -51,7 +72,7 @@ function updateData(email){
 	};
 
 	if (checkLimit(up) == false){
-		up = updateData();
+		up = updateData(email);
 	};
 
 	return up
@@ -62,10 +83,21 @@ function ad(email){
 
 	var user = getUser(email);
 
-	if (user.lastAd == "none" || utils.getLastTime(user.lastAd, -1).days >= 1){
+	if (user.lastAd == "none" || getLastTime(user.lastAd, -1).hours >= 12){
 		user.lastAd = new Date();
 		user.chance = user.chance+1;
-		utils.saveDatabase(database);
+
+		mongodb.MongoClient.connect(mongo_uri, (err, db) => {
+			if(err) throw err;
+			var users = db.collection("users");
+			users.update({"email":user.email}, {$inc:{"chance":1}}, (err, cursor) => {
+				if(err) throw err;
+				db.close(function (err) {
+					if(err) throw err;
+				});
+			});
+		});
+
 		return user.chance
 	}else{
 		return false
@@ -76,9 +108,9 @@ function ad(email){
 function getLastTimeAd(email){
 
 	let user = getUser(email);
-	let t = utils.getLastTime(user.lastAd, -1);
+	let t = getLastTime(user.lastAd, -1);
 
-	if (user.lastAd == "none" || t.days >= 1){
+	if (user.lastAd == "none" || t.hours >= 12){
 		return true
 	}else{
 		return (Date.parse(Date()) - Date.parse(user.lastAd));
@@ -103,63 +135,65 @@ function newUser(obj){
 
 function getUser(email){
 
-	let l = database.length;
-	for (var i = 0; i < l; i++) {
-		if (database[i].email == email){
-			return database[i];
-		};
-	};
+	var user = false;
 
-	return false;
+	mongodb.MongoClient.connect(mongo_uri, (err, db) => {
+		if(err) throw err;
+		var users = db.collection("users");
+		users.find({"email":email}).toArray((err, res) => {
+			if(err) throw err;
+			if (res.length > 0){
+				user = res[0];
+			};
+			db.close(function (err) {
+				if(err) throw err;
+			});
+		});
+	});
 
+	return user;
 };
 
 function checkLimit(up){
 
-	if (up.resultLimit < 0){ // Date Due
-		if (threadLock == false){
-			threadLock = true;
+	if (up.jackpot >= up.resultLimit){
 
-			//change date
-			let date = new Date();
-			date.setDate(1);
-			date.setMonth(date.getMonth()+1);
+		alertWinner();
 
-			alertWinner();
+		maindata.jackpot = maindata.jackpotMin;
+		fs.writeFile("data.json", JSON.stringify(maindata), function(err) {
+			if (err) {return console.log(err);}
+		});
 
-			maindata.jackpot = 20000;
-			maindata.resultLimit = date;
-			utils.saveFile("data.json", maindata);
-
-			threadLock = false;
-			return false
-		}
+		return false
 	}
 	return true
 };
 
-function alertWinner(){
+function alertWinner(){ /////
 
 	//pick a random winner
 
-	let world = [];
+	var winner;
 
-	let l = database.length;
-	for (var i = 0; i < l; i++) {
-		for (var y = 0; y < database[i].chance; y++){
-			world.push(database[i].email);
-		};
-	};
-
-	utils.shuffle(world);
-
-	let winnerEmail = world[Math.floor(Math.random()*world.length)];
-
-	let winner = getUser(winnerEmail);
+	mongodb.MongoClient.connect(mongo_uri, (err, db) => {
+		if(err) throw err;
+		var users = db.collection("users");
+		users.aggregate({$sample: {size:1}}).toArray((err, res) => {
+			if(err) throw err;
+			winner = res[0];
+			db.close(function (err){
+				if(err) throw err;
+			});
+		});
+	});
 
 	//send email
 
-	maindata.lastWinner = winner.givenName+" "+winner.familyName;
+	maindata.lastWinner = winner.givenName+" "+winner.familyName+" "+winner.email;
+	fs.writeFile("data.json", JSON.stringify(maindata), function(err) {
+		if (err) {return console.log(err);}
+	});
 
 	let body = JSON.stringify(winner);
 
@@ -180,5 +214,5 @@ module.exports = {
 	"access": access,
 	"updateData": updateData,
 	"ad":ad,
-	"getLastTimeAd":getLastTimeAd,
+	"getLastTimeAd":getLastTimeAd
 };

@@ -12,7 +12,7 @@ let mailer = nodemailer.createTransport({
 
 var fs = require("fs");
 
-var mongo = require('mongodb');
+var mongodb = require('mongodb');
 var mongo_uri = process.env.MONGODB_URI;
 
 

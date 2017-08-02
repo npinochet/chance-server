@@ -1,0 +1,12 @@
+{
+  "name": "chance-server",
+  "version": "1.0.0",
+  "description": "A server for the application Chance.",
+  "main": "main.js",
+  "scripts": {
+    "test": "node main.js",
+    "start": "node main.js"
+  },
+  "author": "Nicolás Pinochet",
+  "license": "ISC"
+}

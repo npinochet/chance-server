@@ -51,6 +51,18 @@ function access(obj, callback){
 
 		}else{
 			user.accessDate = new Date();
+
+			mongodb.MongoClient.connect(mongo_uri, (err, db) => {
+				if(err) throw err;
+				var users = db.collection("users");
+				users.update({"email":user.email}, {$set:{"accessDate":user.accessDate}}, (err, cursor) => {
+					if(err) throw err;
+					db.close(function (err) {
+						if(err) throw err;
+					});
+				});
+			});
+
 		};
 
 		callback(user);
@@ -102,7 +114,7 @@ function ad(email, callback){
 			});
 
 			callback(user.chance);
-			
+
 		}else{
 			callback(false);
 		};
@@ -149,7 +161,6 @@ function getUser(email, callback){
 		if(err) throw err;
 		var users = db.collection("users");
 		users.find({"email":email}).toArray((err, res) => {
-			console.log("resIMPOrtant "+JSON.stringify(res));
 			if(err) throw err;
 			if (res.length > 0){
 				user = res[0];

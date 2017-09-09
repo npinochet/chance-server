@@ -50,12 +50,11 @@ function access(obj, callback){
 			});
 
 		}else{
-			user.accessDate = new Date();
 
 			mongodb.MongoClient.connect(mongo_uri, (err, db) => {
 				if(err) throw err;
 				var users = db.collection("users");
-				users.update({"email":user.email}, {$set:{"accessDate":user.accessDate}}, (err, cursor) => {
+				users.update({"email":user.email}, {$set:{"accessDate":new Date()}}, (err, cursor) => {
 					if(err) throw err;
 					db.close(function (err) {
 						if(err) throw err;
@@ -125,7 +124,7 @@ function getLastTimeAd(email, callback){
 
 	getUser(email, (user)=>{
 		let t = getLastTime(user.lastAd, -1);
-		if (user.lastAd == "none" || t.hours >= 12){
+		if (user.lastAd == null || t.hours >= 12){
 			callback(true);
 		}else{
 			callback(Date.parse(Date()) - Date.parse(user.lastAd));

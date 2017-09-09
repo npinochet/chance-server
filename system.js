@@ -34,7 +34,7 @@ function getLastTime(endtime, until){
 function access(obj, callback){
 
 	getUser(obj.email, (user) =>{
-		if (user == false){  //user doesn't exists
+		if (user == null){  //user doesn't exists
 
 			user = newUser(obj);
 
@@ -84,7 +84,7 @@ function updateData(email, callback){
 
 	if (email != undefined){
 		getUser(email, (user) => {
-			if (user){
+			if (user != null){
 				up.chance = user.chance;
 			};
 			callback(up);
@@ -125,13 +125,15 @@ function ad(email, callback){
 function getLastTimeAd(email, callback){
 
 	getUser(email, (user)=>{
-		let t = getLastTime(user.lastAd, -1);
-		if (user.lastAd == null || t.hours >= 12){
-			callback(true);
-		}else{
-			callback(Date.parse(Date()) - Date.parse(user.lastAd));
+		if (user != null){
+			let t = getLastTime(user.lastAd, -1);
+			if (user.lastAd == null || t.hours >= 12){
+				callback(true);
+			}else{
+				callback(Date.parse(Date()) - Date.parse(user.lastAd));
+			};
 		};
-
+		callback(true);
 	});
 	
 
@@ -181,12 +183,12 @@ function checkLimit(up){
 
 		maindata.jackpot = maindata.jackpotMin;
 		fs.writeFile("data.json", JSON.stringify(maindata), function(err) {
-			if (err) {return console.log(err);}
+			if (err) {return console.log(err);};
 		});
 
-		return false
+		return false;
 	}
-	return true
+	return true;
 };
 
 function alertWinner(){ /////

@@ -99,13 +99,11 @@ function ad(email, callback){
 	getUser(email, (user)=>{
 
 		if (user.lastAd == null || getLastTime(user.lastAd, -1).hours >= 12){
-			user.lastAd = new Date();
-			user.chance = user.chance+1;
 
 			mongodb.MongoClient.connect(mongo_uri, (err, db) => {
 				if(err) throw err;
 				var users = db.collection("users");
-				users.update({"email":user.email}, {$inc:{"chance":1}, "lastAd":user.lastAd}, (err, cursor) => {
+				users.update({"email":user.email}, {$inc:{"chance":1}, $set:{"lastAd":new Date()}}, (err, cursor) => {
 					if(err) throw err;
 					db.close(function (err) {
 						if(err) throw err;
@@ -113,7 +111,7 @@ function ad(email, callback){
 				});
 			});
 
-			callback(user.chance);
+			callback(user.chance+1);
 
 		}else{
 			callback(false);

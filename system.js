@@ -84,7 +84,7 @@ function updateData(email, callback){
 
 	if (email != undefined){
 		getUser(email, (user) => {
-			up.chance = user.chance			
+			up.chance = user.chance
 			callback(up);
 		});
 	}else{

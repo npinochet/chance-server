@@ -129,12 +129,12 @@ function getLastTimeAd(email, callback){
 		if (user != null){
 			let t = getLastTime(user.lastAd, -1);
 			if (user.lastAd == null || t.hours >= 12){
-				callback(true);
+				callback(null);
 			}else{
 				callback(Date.parse(Date()) - Date.parse(user.lastAd));
 			};
 		}else{
-			callback(true);
+			callback(null);
 		};
 	});
 	

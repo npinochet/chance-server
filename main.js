@@ -58,6 +58,7 @@ app.post("/login", function(req, res){
 
 	sys.access(req.body, (user) => {
 		up = sys.updateData(null, (up)=>{
+			up.chance = user.chance;
 			res.json(up);
 		});
 	});

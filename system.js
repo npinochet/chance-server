@@ -77,6 +77,7 @@ function updateData(email, callback){
 	up.jackpot = maindata.jackpot;
 	up.resultLimit = maindata.resultLimit;
 	up.lastWinner = maindata.lastWinner;
+	up.chance = null;
 
 	if (checkLimit(up) == false){
 		up = updateData(email, callback);
@@ -132,8 +133,9 @@ function getLastTimeAd(email, callback){
 			}else{
 				callback(Date.parse(Date()) - Date.parse(user.lastAd));
 			};
+		}else{
+			callback(true);
 		};
-		callback(true);
 	});
 	
 

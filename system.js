@@ -97,8 +97,8 @@ function updateData(email, callback){
 function ad(email, callback){
 
 	getUser(email, (user)=>{
-
-		if (user.lastAd == "none" || getLastTime(user.lastAd, -1).hours >= 12){
+		
+		if (user.lastAd == null || getLastTime(user.lastAd, -1).hours >= 12){
 			user.lastAd = new Date();
 			user.chance = user.chance+1;
 
@@ -163,7 +163,6 @@ function getUser(email, callback){
 		users.find({"email":email}).toArray((err, res) => {
 			if(err) throw err;
 			if (res.length > 0){
-
 				callback(res[0]);
 			}else{
 				callback(null);

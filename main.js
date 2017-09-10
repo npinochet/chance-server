@@ -65,7 +65,7 @@ app.post("/login", function(req, res){
 	
 });
 
-app.post("/buy", function(req, res){
+app.get("/buy", function(req, res){
 
 	console.log("accessed: /buy "+req.body.email+" "+req.body.item.product_id);
 

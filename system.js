@@ -137,9 +137,29 @@ function getLastTimeAd(email, callback){
 			callback(null);
 		};
 	});
-	
+};
+
+function confirmBuy(email, details, item, callback){
+
+	//confrim buy
+
+	//change chance in mongo
+
+	mongodb.MongoClient.connect(mongo_uri, (err, db) => {
+		if(err) throw err;
+		var users = db.collection("users");
+		users.update({"email":email}, {$inc:{"chance":item.multi}}, (err, cursor) => {
+			if(err) throw err;
+			db.close(function (err) {
+				if(err) throw err;
+			});
+		});
+	});
+
+	callback(true);
 
 };
+
 
 function newUser(obj){
 
@@ -236,5 +256,6 @@ module.exports = {
 	"access": access,
 	"updateData": updateData,
 	"ad":ad,
-	"getLastTimeAd":getLastTimeAd
+	"getLastTimeAd":getLastTimeAd,
+	"confirmBuy":confirmBuy,
 };

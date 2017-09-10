@@ -65,6 +65,16 @@ app.post("/login", function(req, res){
 	
 });
 
+app.post("/buy", function(req, res){
+
+	console.log("accessed: /buy "+req.body.email+" "+req.body.item.product_id);
+
+	sys.confirmBuy(req.body.email, req.body.details, req.body.item, (confrimed) =>{
+		res.json(confrimed);
+	});
+	
+});
+
 app.listen(port,null,function(){ 
 	console.log('%s: Node server started on %s:%d.', Date(Date.now()), os.hostname(), port);
 });

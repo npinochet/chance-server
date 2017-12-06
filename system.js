@@ -12,6 +12,14 @@ let mailer = nodemailer.createTransport({
 
 var fs = require("fs");
 
+var iap = require('in-app-purchase');
+iap.config({
+	test: true, // remember to change this
+	//googlePublicKeyStrSandbox: publicKeySandboxString,
+    //googlePublicKeyStrLive: publicKeyLiveString,
+    googlePublicKeyPath: "path/to/public/key/directory/" // this is the path to the directory containing iap-sanbox/iap-live files
+});
+
 var mongodb = require('mongodb');
 var mongo_uri = process.env.MONGODB_URI;
 
@@ -141,25 +149,39 @@ function getLastTimeAd(email, callback){
 
 function confirmBuy(email, details, item, callback){
 
-	//confrim buy
+	iap.setup(function (error) {
+		if (error) {
+			// Don't forget to catch error here
+			console.log("Error Validating buy");
+			callback(false);
+		};
+		// As of v1.4.0+ .validate and .validateOnce detects service automatically from the receipt
+		iap.validate(details.purchaseToken, function (error, response) {
+			if (error) {
+				// Failed to validate
+				console.log("Error Validating buy");
+				callback(false);
+			};
+			if (iap.isValidated(response)) {
+				//Succuessful validation change chance in mongo
 
-	//change chance in mongo
+				mongodb.MongoClient.connect(mongo_uri, (err, db) => {
+					if(err) throw err;
+					var users = db.collection("users");
+					users.update({"email":email}, {$inc:{"chance":item.multi}}, (err, cursor) => {
+						if(err) throw err;
+						db.close(function (err) {
+							if(err) throw err;
+						});
+					});
+				});
 
-	mongodb.MongoClient.connect(mongo_uri, (err, db) => {
-		if(err) throw err;
-		var users = db.collection("users");
-		users.update({"email":email}, {$inc:{"chance":item.multi}}, (err, cursor) => {
-			if(err) throw err;
-			db.close(function (err) {
-				if(err) throw err;
-			});
+				callback(true);
+			};
 		});
 	});
 
-	callback(true);
-
 };
-
 
 function newUser(obj){
 

@@ -32,9 +32,9 @@ function getLastTime(endtime, until){
 	}
 	
 	var t = (Date.parse(endtime) - Date.parse(Date()))*until;
-	var seconds = Math.floor( (t/1000) % 60 );
-	var minutes = Math.floor( (t/1000/60) % 60 );
-	var hours = Math.floor( (t/(1000*60*60)) % 24 );
+	var seconds = Math.floor( (t/1000) );
+	var minutes = Math.floor( (t/1000/60) );
+	var hours = Math.floor( (t/(1000*60*60)) );
 	var days = Math.floor( t/(1000*60*60*24) );
 	return {'total': t,'days': days,'hours': hours,'minutes': minutes,'seconds': seconds};
 }

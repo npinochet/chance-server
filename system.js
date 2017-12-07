@@ -152,14 +152,14 @@ function confirmBuy(email, details, item, callback){
 	iap.setup(function (error) {
 		if (error) {
 			// Don't forget to catch error here
-			console.log("Error Validating buy");
+			console.log("Error Validating buy: "+error);
 			callback(false);
 		};
 		// As of v1.4.0+ .validate and .validateOnce detects service automatically from the receipt
 		iap.validate(details.purchaseToken, function (error, response) {
 			if (error) {
 				// Failed to validate
-				console.log("Error Validating buy");
+				console.log("Error Validating buy: "+error);
 				callback(false);
 			};
 			if (iap.isValidated(response)) {

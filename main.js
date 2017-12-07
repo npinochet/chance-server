@@ -67,8 +67,6 @@ app.post("/login", function(req, res){
 
 app.post("/buy", function(req, res){
 
-	console.log(req);
-
 	console.log("accessed: /buy "+req.body.email+" "+req.body.item.product_id);
 
 	sys.confirmBuy(req.body.email, req.body.details, req.body.item, (confrimed) =>{

@@ -65,11 +65,13 @@ app.post("/login", function(req, res){
 	
 });
 
-app.get("/buy", function(req, res){
+app.post("/buy", function(req, res){
 
-	console.log("accessed: /buy "+req.query.email+" "+req.query.item.product_id);
+	console.log(req);
 
-	sys.confirmBuy(req.query.email, req.query.details, req.query.item, (confrimed) =>{
+	console.log("accessed: /buy "+req.body.email+" "+req.body.item.product_id);
+
+	sys.confirmBuy(req.body.email, req.body.details, req.body.item, (confrimed) =>{
 		res.json(confrimed);
 	});
 	

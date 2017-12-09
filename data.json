@@ -1,6 +1,7 @@
 {
-	"resultLimit":"200000",
-	"jackpot":30000,
-	"lastWinner":"undefined",
-	"jackpotMin":20000
+	"resultLimit":"200000", // the goal of every round
+	"jackpot":30000, // the amount of money there's in the pot
+	"lastWinner":"undefined", // name of the last winner
+	"jackpotMin":20000, //amount every round starts with
+	"adCost": 5 //amount added to jackpot with every add
 }

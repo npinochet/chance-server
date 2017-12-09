@@ -121,7 +121,13 @@ function ad(email, callback){
 				});
 			});
 
-			callback(user.chance+1);
+			//add amount to jackpot
+			maindata.jackpot = maindata.jackpot+maindata.adCost;
+			fs.writeFile("data.json", JSON.stringify(maindata), function(err) {
+				if (err) {return console.log(err);};
+			});
+
+			callback(Date.parse(new Date()));
 
 		}else{
 			callback(false);
@@ -174,6 +180,12 @@ function confirmBuy(email, details, item, callback){
 							if(err) throw err;
 						});
 					});
+				});
+
+				//add amount to jackpot
+				maindata.jackpot = maindata.jackpot+item.cost;
+				fs.writeFile("data.json", JSON.stringify(maindata), function(err) {
+					if (err) {return console.log(err);};
 				});
 
 				callback(true);

@@ -110,6 +110,12 @@ function ad(email, callback){
 
 		if (user.lastAd == null || getLastTime(user.lastAd, -1).hours >= 12){
 
+			//add amount to jackpot
+			maindata.jackpot = maindata.jackpot+maindata.adCost;
+			fs.writeFile("data.json", JSON.stringify(maindata), function(err) {
+				if (err) {return console.log(err);};
+			});
+
 			mongodb.MongoClient.connect(mongo_uri, (err, db) => {
 				if(err) throw err;
 				var users = db.collection("users");
@@ -120,12 +126,6 @@ function ad(email, callback){
 					});
 					callback(true);
 				});
-			});
-
-			//add amount to jackpot
-			maindata.jackpot = maindata.jackpot+maindata.adCost;
-			fs.writeFile("data.json", JSON.stringify(maindata), function(err) {
-				if (err) {return console.log(err);};
 			});
 
 		}else{
@@ -168,6 +168,13 @@ function confirmBuy(email, details, item, callback){
 				callback(false);
 			};
 			if (iap.isValidated(response)) {
+
+				//add amount to jackpot
+				maindata.jackpot = maindata.jackpot+item.cost;
+				fs.writeFile("data.json", JSON.stringify(maindata), function(err) {
+					if (err) {return console.log(err);};
+				});
+
 				//Succuessful validation change chance in mongo
 
 				mongodb.MongoClient.connect(mongo_uri, (err, db) => {
@@ -178,16 +185,10 @@ function confirmBuy(email, details, item, callback){
 						db.close(function (err) {
 							if(err) throw err;
 						});
+						callback(true);
 					});
 				});
 
-				//add amount to jackpot
-				maindata.jackpot = maindata.jackpot+item.cost;
-				fs.writeFile("data.json", JSON.stringify(maindata), function(err) {
-					if (err) {return console.log(err);};
-				});
-
-				callback(true);
 			};
 		});
 	});

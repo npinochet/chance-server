@@ -117,8 +117,8 @@ function ad(email, callback){
 					if(err) throw err;
 					db.close(function (err) {
 						if(err) throw err;
-						callback(true);
 					});
+					callback(true);
 				});
 			});
 

@@ -15,9 +15,9 @@ var fs = require("fs");
 var iap = require('in-app-purchase');
 iap.config({
 	test: true, // remember to change this
-	//googlePublicKeyStrSandbox: publicKeySandboxString,
-    //googlePublicKeyStrLive: publicKeyLiveString,
-    googlePublicKeyPath: "path/to/public/key/directory/" // this is the path to the directory containing iap-sanbox/iap-live files
+	googlePublicKeyStrSandbox: "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAn2euc1TChqRQ3C0Rtk8v4n9DldUFwAV++UWdgj4OIx7OOY/HE5YT42V7rRUcKGn+IrWVs/qiRXvLyFUUqeK9u/+KUet7Mz/j7Cl/5iE+u6lai/gvQlA9159ELREZpOX8ShdT1Bu9B3ej3iZYse+vO7UbmTOBr5V54fW3roMkOpiXbqwFCFsFf1aCQ43EAYzcwxJFVVElOyP229ALPyvO1cFHrs9BbRAd++fS7iEYkUi+p/cacnJ4w9MZqzDkfjZu6U4s8Dg2LKD4KTdex5e3NXLa3fmC3UPlud9Mt4jQG7Oiop6y752h2ePrSFpPIGY0XybEgg6VLl8mS2ssRY44RwIDAQAB",
+	googlePublicKeyStrLive: "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAn2euc1TChqRQ3C0Rtk8v4n9DldUFwAV++UWdgj4OIx7OOY/HE5YT42V7rRUcKGn+IrWVs/qiRXvLyFUUqeK9u/+KUet7Mz/j7Cl/5iE+u6lai/gvQlA9159ELREZpOX8ShdT1Bu9B3ej3iZYse+vO7UbmTOBr5V54fW3roMkOpiXbqwFCFsFf1aCQ43EAYzcwxJFVVElOyP229ALPyvO1cFHrs9BbRAd++fS7iEYkUi+p/cacnJ4w9MZqzDkfjZu6U4s8Dg2LKD4KTdex5e3NXLa3fmC3UPlud9Mt4jQG7Oiop6y752h2ePrSFpPIGY0XybEgg6VLl8mS2ssRY44RwIDAQAB",
+	//googlePublicKeyPath: "path/to/public/key/directory/" // this is the path to the directory containing iap-sanbox/iap-live files
 });
 
 var mongodb = require('mongodb');

@@ -78,5 +78,3 @@ app.post("/buy", function(req, res){
 app.listen(port,null,function(){ 
 	console.log('%s: Node server started on %s:%d.', Date(Date.now()), os.hostname(), port);
 });
-
-

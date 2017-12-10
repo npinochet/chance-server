@@ -22,7 +22,6 @@ app.get("/ad",function(req, res){
 	console.log("accessed: /ad "+req.query.email);
 
 	sys.ad(req.query.email, (date)=>{
-		console.log(date);
 		res.json({"date":date});
 	});
 

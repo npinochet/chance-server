@@ -93,7 +93,7 @@ function updateData(email, callback){
 			up.adHours = maindata.adHours;
 			up.chance = null;
 
-			if (checkLimit(up, (bool => {
+			checkLimit(up, (bool => {
 
 				if (bool == false){
 					up = updateData(email, callback);

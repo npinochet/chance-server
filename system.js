@@ -293,7 +293,8 @@ function alertWinner(jackpot){ /////
 			if (randNum < chance) {
 				return email;
 			};
-		randNum -= chance;
+			randNum -= chance;
+		};
 	};
 
 	//pick a random winner

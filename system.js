@@ -80,27 +80,41 @@ function access(obj, callback){
 
 function updateData(email, callback){
 
-	let up = {};
+	mongodb.MongoClient.connect(mongo_uri, (err, db) => {
+		if (err) throw err;
+		db.collection("jackpot").findOne({}, (err, res) => {
+			if(err) throw err;
 
-	up.jackpot = maindata.jackpot;
-	up.resultLimit = maindata.resultLimit;
-	up.lastWinner = maindata.lastWinner;
-	up.chance = null;
+			let up = {};
 
-	if (checkLimit(up) == false){
-		up = updateData(email, callback);
-	};
+			up.jackpot = res.jackpot;
+			up.resultLimit = maindata.resultLimit;
+			up.lastWinner = maindata.lastWinner;
+			up.adHours = maindata.adHours;
+			up.chance = null;
 
-	if (email != undefined){
-		getUser(email, (user) => {
-			if (user != null){
-				up.chance = user.chance;
-			};
-			callback(up);
+			if (checkLimit(up, (bool => {
+
+				if (bool == false){
+					up = updateData(email, callback);
+				};
+
+				if (email != undefined){
+					getUser(email, (user) => {
+						if (user != null){
+							up.chance = user.chance;
+						};
+						callback(up);
+					});
+				}else{
+					callback(up);
+				};
+
+			}));
+
+			db.close((err) => {if (err) throw err;});
 		});
-	}else{
-		callback(up);
-	};
+	});
 
 };
 
@@ -108,13 +122,10 @@ function ad(email, callback){
 
 	getUser(email, (user)=>{
 
-		if (user.lastAd == null || getLastTime(user.lastAd, -1).hours >= 12){
+		if (user.lastAd == null || getLastTime(user.lastAd, -1).hours >= maindata.adHours){
 
 			//add amount to jackpot
-			maindata.jackpot = maindata.jackpot+maindata.adCost;
-			fs.writeFile("data.json", JSON.stringify(maindata), function(err) {
-				if (err) {return console.log(err);};
-			});
+			updateJackpot(false, maindata.adCost, null);
 
 			mongodb.MongoClient.connect(mongo_uri, (err, db) => {
 				if(err) throw err;
@@ -141,10 +152,12 @@ function getLastTimeAd(email, callback){
 	getUser(email, (user)=>{
 		if (user != null){
 			let t = getLastTime(user.lastAd, -1);
-			if (user.lastAd == null || t.hours >= 12){
+			if (user.lastAd == null || t.hours >= maindata.adHours){
 				callback(null);
 			}else{
-				callback(Date.parse(Date()) - Date.parse(user.lastAd));
+				let elapsed = Date.parse(Date()) - Date.parse(user.lastAd);
+				let remain = maindata.adHours*(1000*60*60) - elapsed;
+				callback(remain);
 			};
 		}else{
 			callback(null);
@@ -170,10 +183,7 @@ function confirmBuy(email, details, item, callback){
 			if (iap.isValidated(response)) {
 
 				//add amount to jackpot
-				maindata.jackpot = maindata.jackpot+item.cost;
-				fs.writeFile("data.json", JSON.stringify(maindata), function(err) {
-					if (err) {return console.log(err);};
-				});
+				updateJackpot(false, item.cost, null);
 
 				//Succuessful validation change chance in mongo
 
@@ -231,23 +241,45 @@ function getUser(email, callback){
 	});
 };
 
-function checkLimit(up){
+function updateJackpot(set, value, callback){
 
-	if (up.jackpot >= up.resultLimit){
-
-		alertWinner();
-
-		maindata.jackpot = maindata.jackpotMin;
-		fs.writeFile("data.json", JSON.stringify(maindata), function(err) {
-			if (err) {return console.log(err);};
+	let update = {$inc:{"jackpot":value}};
+	if (set){
+		update = {$set:{"jackpot":value}};
+	};
+	mongodb.MongoClient.connect(mongo_uri, (err, db) => {
+		if (err) throw err;
+		db.collection("jackpot").updateOne({}, update, (err, cursor) => {
+			if(err) throw err;
+			db.close((err) => {if (err) throw err;});
+			if (callback) {callback();};
 		});
-
-		return false;
-	}
-	return true;
+	});
 };
 
-function alertWinner(){ /////
+function checkLimit(up, callback){
+
+	mongodb.MongoClient.connect(mongo_uri, (err, db) => {
+		if (err) throw err;
+		db.collection("jackpot").findOne({}, (err, res) => {
+			if(err) throw err;
+
+			if (res.jackpot >= up.resultLimit){
+				alertWinner(res.jackpot);
+				updateJackpot(true, main.jackpotMin, () => {
+					callback(false);
+				});
+			}else{
+				callback(true);
+			};
+
+			db.close((err) => {if (err) throw err;});
+		});
+	});
+
+};
+
+function alertWinner(jackpot){ /////
 
 	//pick a random winner
 
@@ -273,8 +305,8 @@ function alertWinner(){ /////
 			let mailOptions = {
 				from: '"Digi Lotto" <node-server@bdigi-lotto.com>',
 				to: "n.pinochet@hotmail.com",
-				subject: "digi lotto winner",
-				text:body+" jackpot:"+maindata.jackpot.toString(),
+				subject: "Digi Lotto Winner",
+				text:body+" jackpot: "+jackpot.toString(),
 			};
 
 			mailer.sendMail(mailOptions, (error, info) => {if (error) {return console.log(error);}

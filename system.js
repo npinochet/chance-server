@@ -14,7 +14,7 @@ var fs = require("fs");
 
 var iap = require('in-app-purchase');
 iap.config({
-	test: true, // remember to change this
+	test: false, // remember to change this
 	googlePublicKeyStrSandbox: "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAn2euc1TChqRQ3C0Rtk8v4n9DldUFwAV++UWdgj4OIx7OOY/HE5YT42V7rRUcKGn+IrWVs/qiRXvLyFUUqeK9u/+KUet7Mz/j7Cl/5iE+u6lai/gvQlA9159ELREZpOX8ShdT1Bu9B3ej3iZYse+vO7UbmTOBr5V54fW3roMkOpiXbqwFCFsFf1aCQ43EAYzcwxJFVVElOyP229ALPyvO1cFHrs9BbRAd++fS7iEYkUi+p/cacnJ4w9MZqzDkfjZu6U4s8Dg2LKD4KTdex5e3NXLa3fmC3UPlud9Mt4jQG7Oiop6y752h2ePrSFpPIGY0XybEgg6VLl8mS2ssRY44RwIDAQAB",
 	googlePublicKeyStrLive: "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAn2euc1TChqRQ3C0Rtk8v4n9DldUFwAV++UWdgj4OIx7OOY/HE5YT42V7rRUcKGn+IrWVs/qiRXvLyFUUqeK9u/+KUet7Mz/j7Cl/5iE+u6lai/gvQlA9159ELREZpOX8ShdT1Bu9B3ej3iZYse+vO7UbmTOBr5V54fW3roMkOpiXbqwFCFsFf1aCQ43EAYzcwxJFVVElOyP229ALPyvO1cFHrs9BbRAd++fS7iEYkUi+p/cacnJ4w9MZqzDkfjZu6U4s8Dg2LKD4KTdex5e3NXLa3fmC3UPlud9Mt4jQG7Oiop6y752h2ePrSFpPIGY0XybEgg6VLl8mS2ssRY44RwIDAQAB",
 	//googlePublicKeyPath: "path/to/public/key/directory/" // this is the path to the directory containing iap-sanbox/iap-live files
@@ -84,35 +84,39 @@ function updateData(email, callback){
 		if (err) throw err;
 		db.collection("jackpot").findOne({}, (err, res) => {
 			if(err) throw err;
+			db.collection("winners").findOne({}, (err, win) => {
+				if(err) throw err;
 
-			let up = {};
+				let up = {};
 
-			up.jackpot = res.jackpot;
-			up.resultLimit = maindata.resultLimit;
-			up.lastWinner = maindata.lastWinner;
-			up.adHours = maindata.adHours;
-			up.chance = null;
+				up.jackpot = res.jackpot;
+				up.resultLimit = maindata.resultLimit;
+				up.lastWinner = win.lastWinner;
+				up.adHours = maindata.adHours;
+				up.chance = null;
 
-			checkLimit(up, (bool => {
+				checkLimit(up, (bool => {
 
-				if (bool == false){
-					up = updateData(email, callback);
-				};
+					if (bool == false){
+						up = updateData(email, callback);
+					};
 
-				if (email != undefined){
-					getUser(email, (user) => {
-						if (user != null){
-							up.chance = user.chance;
-						};
+					if (email != undefined){
+						getUser(email, (user) => {
+							if (user != null){
+								up.chance = user.chance;
+							};
+							callback(up);
+						});
+					}else{
 						callback(up);
-					});
-				}else{
-					callback(up);
-				};
+					};
 
-			}));
+				}));
 
-			db.close((err) => {if (err) throw err;});
+				db.close((err) => {if (err) throw err;});
+
+			});
 		});
 	});
 
@@ -183,14 +187,14 @@ function confirmBuy(email, details, item, callback){
 			if (iap.isValidated(response)) {
 
 				//add amount to jackpot
-				updateJackpot(false, item.cost, null);
+				updateJackpot(false, item.priceValue, null);
 
 				//Succuessful validation change chance in mongo
 
 				mongodb.MongoClient.connect(mongo_uri, (err, db) => {
 					if(err) throw err;
 					var users = db.collection("users");
-					users.update({"email":email}, {$inc:{"chance":item.multi}}, (err, cursor) => {
+					users.update({"email":email}, {$inc:{"chance":parseInt(item.productId)}}, (err, cursor) => {
 						if(err) throw err;
 						db.close(function (err) {
 							if(err) throw err;
@@ -199,6 +203,8 @@ function confirmBuy(email, details, item, callback){
 					});
 				});
 
+			}else{
+				callback(false);
 			};
 		});
 	});
@@ -281,38 +287,70 @@ function checkLimit(up, callback){
 
 function alertWinner(jackpot){ /////
 
+	function selectWeightedRandom(elements, total) {
+		let randNum = Math.random()*total;
+		for (const { email, chance } of elements) {
+			if (randNum < chance) {
+				return email;
+			};
+		randNum -= chance;
+	};
+
 	//pick a random winner
 
 	mongodb.MongoClient.connect(mongo_uri, (err, db) => {
 		if(err) throw err;
 		var users = db.collection("users");
-		users.aggregate({$sample: {size:1}}).toArray((err, res) => {
+
+		users.aggregate({$group:{_id:null, "totalChance":{$sum:"$chance"}, "count":{$sum:1}}}, (err, res) => {
 			if(err) throw err;
-			var winner = res[0];
-			db.close(function (err){
+
+			users.find({"chance":{$gt:0}}, {"email":1, "chance":1}).toArray((err, weights) => {
 				if(err) throw err;
+
+				let freqs = {};
+				weights.forEach((v) => freqs[v.email] = 0);
+
+				for (let i = 0; i < 1000; i++) {
+					freqs[selectWeightedRandom(weights, res.totalChance)]++;
+				};
+
+				let entries = Object.entries(freqs);
+				let arr = [];
+				entries.forEach((v) => arr.push(v[1]));
+				let winner = entries[arr.indexOf(Math.max(..arr))][0];
+
+				users.find({"email":winner}).toArray((err, user) => {
+					if(err) throw err;
+
+					//send email
+
+					db.collection("winners").updateOne({}, {$set:{"lastWinner":user[0].name}}, (err, cursor) => {
+						if(err) throw err;
+						db.close((err) => {if (err) throw err;});
+					});
+
+					let body = JSON.stringify(user[0]);
+
+					let mailOptions = {
+						from: '"Digi Lotto" <node-server@bdigi-lotto.com>',
+						to: "n.pinochet@hotmail.com",
+						subject: "Digi Lotto Winner",
+						text:body+" jackpot: "+jackpot.toString(),
+					};
+
+					mailer.sendMail(mailOptions, (error, info) => {if (error) {return console.log(error);}
+						console.log('Message %s sent: %s', info.messageId, info.response);
+					});
+
+
+					db.close(function (err){
+						if(err) throw err;
+					});
+
+				});
+
 			});
-
-			//send email
-
-			maindata.lastWinner = winner.name+" "+winner.email;
-			fs.writeFile("data.json", JSON.stringify(maindata), function(err) {
-				if (err) {return console.log(err);}
-			});
-
-			let body = JSON.stringify(winner);
-
-			let mailOptions = {
-				from: '"Digi Lotto" <node-server@bdigi-lotto.com>',
-				to: "n.pinochet@hotmail.com",
-				subject: "Digi Lotto Winner",
-				text:body+" jackpot: "+jackpot.toString(),
-			};
-
-			mailer.sendMail(mailOptions, (error, info) => {if (error) {return console.log(error);}
-				console.log('Message %s sent: %s', info.messageId, info.response);
-			});
-
 		});
 	});
 

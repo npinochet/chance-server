@@ -187,7 +187,15 @@ function confirmBuy(email, details, item, callback){
 			if (iap.isValidated(response)) {
 
 				//add amount to jackpot
-				updateJackpot(false, item.priceValue, null);
+				let price = item.priceValue*100;
+
+				///////// legacy Chilean Pesos, CLP => USD
+				if (item.currency == "CLP"){
+					price = item.priceValue/5;
+				};
+				/////////legacy
+
+				updateJackpot(false, Math.floor(price), null);
 
 				//Succuessful validation change chance in mongo
 

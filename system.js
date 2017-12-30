@@ -105,8 +105,9 @@ function updateData(email, callback){
 					};
 
 					if (email != undefined){
+						console.log(email);
 						getUser(email, (user) => {
-							if (user != null){
+							if (user != null && user != undefined){
 								up.chance = user.chance;
 							};
 							callback(up);
@@ -296,6 +297,8 @@ function checkLimit(up, callback){
 
 function alertWinner(jackpot){ /////
 
+	console.log("Alert Winner");
+
 	function selectWeightedRandom(elements, total) {
 		let randNum = Math.random()*total;
 		for (const { email, chance } of elements) {
@@ -341,16 +344,16 @@ function alertWinner(jackpot){ /////
 						db.close((err) => {if (err) throw err;});
 					});
 
-					let body = JSON.stringify(user[0]);
-
 					let mailOptions = {
 						from: '"Digi Lotto" <node-server@bdigi-lotto.com>',
 						to: "n.pinochet@hotmail.com",
 						subject: "Digi Lotto Winner",
-						text:body+" jackpot: "+jackpot.toString(),
+						text:JSON.stringify(user[0])+" jackpot: "+jackpot.toString(),
 					};
 
-					mailer.sendMail(mailOptions, (error, info) => {if (error) {return console.log(error);}
+					console.log("Send Email with winner");
+					mailer.sendMail(mailOptions, (error, info) => {
+						if (error) {return console.log(error);};
 						console.log('Message %s sent: %s', info.messageId, info.response);
 					});
 

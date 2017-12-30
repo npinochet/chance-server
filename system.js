@@ -283,9 +283,7 @@ function checkLimit(up, callback){
 
 			if (res.jackpot >= up.resultLimit){
 				alertWinner(res.jackpot);
-				updateJackpot(true, maindata.jackpotMin, () => {
-					callback(false);
-				});
+				updateJackpot(true, maindata.jackpotMin, () => callback(false));
 			}else{
 				callback(true);
 			};
@@ -314,14 +312,14 @@ function alertWinner(jackpot){ /////
 		if(err) throw err;
 		var users = db.collection("users");
 
-		users.aggregate({$group:{_id:null, "totalChance":{$sum:"$chance"}, "count":{$sum:1}}}, (err, res) => {
+		users.aggregate([{$group:{_id:null, totalChance:{$sum:"$chance"}, count:{$sum:1}}}], (err, res) => {
 			if(err) throw err;
 
 			users.find({"chance":{$gt:0}}, {"email":1, "chance":1}).toArray((err, weights) => {
 				if(err) throw err;
 
 				console.log(weights);
-				console.log(res.totalChance);
+				console.log(res);
 
 				let freqs = {};
 				weights.forEach((v) => freqs[v.email] = 0);

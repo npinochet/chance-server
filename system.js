@@ -102,17 +102,17 @@ function updateData(email, callback){
 
 					if (bool == false){
 						updateData(email, (updat) => callback(updat));
-					};
-
-					if (email != undefined){
-						getUser(email, (user) => {
-							if (user != null){
-								up.chance = user.chance;
-							};
-							callback(up);
-						});
 					}else{
-						callback(up);
+						if (email != undefined){
+							getUser(email, (user) => {
+								if (user != null){
+									up.chance = user.chance;
+								};
+								callback(up);
+							});
+						}else{
+							callback(up);
+						};
 					};
 
 				});

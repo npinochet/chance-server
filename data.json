@@ -1,6 +1,6 @@
 {
 	"resultLimit":10000,
 	"jackpotMin":2000,
-	"adCost": 5,
+	"adCost": 2,
 	"adHours": 6
 }

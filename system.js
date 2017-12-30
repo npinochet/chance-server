@@ -45,6 +45,7 @@ function access(obj, callback){
 		if (user == null){  //user doesn't exists
 
 			user = newUser(obj);
+			user.new = true;
 
 			mongodb.MongoClient.connect(mongo_uri, (err, db) => {
 				if(err) throw err;
@@ -58,6 +59,8 @@ function access(obj, callback){
 			});
 
 		}else{
+
+			user.new = false;
 
 			mongodb.MongoClient.connect(mongo_uri, (err, db) => {
 				if(err) throw err;

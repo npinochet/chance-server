@@ -101,7 +101,7 @@ function updateData(email, callback){
 				checkLimit(up, (bool) => {
 
 					if (bool == false){
-						updateDate(email, (updat) => callback(updat));
+						updateData(email, (updat) => callback(updat));
 					};
 
 					if (email != undefined){
@@ -352,9 +352,8 @@ function alertWinner(jackpot){ /////
 
 					console.log("Send Email with winner");
 					mailer.sendMail(mailOptions, (error, info) => {
-						if (error) {console.log(error)}else{
-							console.log('Message %s sent: %s', info.messageId, info.response);
-						}
+						if (error) {return console.log(error)};
+						console.log('Message %s sent: %s', info.messageId, info.response);
 					});
 
 

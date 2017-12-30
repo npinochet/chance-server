@@ -283,7 +283,7 @@ function checkLimit(up, callback){
 
 			if (res.jackpot >= up.resultLimit){
 				alertWinner(res.jackpot);
-				updateJackpot(true, main.jackpotMin, () => {
+				updateJackpot(true, maindata.jackpotMin, () => {
 					callback(false);
 				});
 			}else{

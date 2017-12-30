@@ -98,16 +98,15 @@ function updateData(email, callback){
 				up.adHours = maindata.adHours;
 				up.chance = null;
 
-				checkLimit(up, (bool => {
+				checkLimit(up, (bool) => {
 
 					if (bool == false){
-						up = updateData(email, callback);
+						updateDate(email, (updat) => callback(updat));
 					};
 
 					if (email != undefined){
-						console.log(email);
 						getUser(email, (user) => {
-							if (user != null && user != undefined){
+							if (user != null){
 								up.chance = user.chance;
 							};
 							callback(up);
@@ -116,7 +115,7 @@ function updateData(email, callback){
 						callback(up);
 					};
 
-				}));
+				});
 
 				db.close((err) => {if (err) throw err;});
 
@@ -353,8 +352,9 @@ function alertWinner(jackpot){ /////
 
 					console.log("Send Email with winner");
 					mailer.sendMail(mailOptions, (error, info) => {
-						if (error) {return console.log(error);};
-						console.log('Message %s sent: %s', info.messageId, info.response);
+						if (error) {console.log(error)}else{
+							console.log('Message %s sent: %s', info.messageId, info.response);
+						}
 					});
 
 

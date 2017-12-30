@@ -320,23 +320,19 @@ function alertWinner(jackpot){ /////
 			users.find({"chance":{$gt:0}}, {"email":1, "chance":1}).toArray((err, weights) => {
 				if(err) throw err;
 
+				console.log(weights);
+				console.log(res.totalChance);
+
 				let freqs = {};
-				weights.forEach((v) => {if (v != undefined) freqs[v.email] = 0});
+				weights.forEach((v) => freqs[v.email] = 0);
 
 				for (let i = 0; i < 1000; i++) {
-					let r = selectWeightedRandom(weights, res.totalChance)
-					console.log(r);
-					freqs[r]++;
+					freqs[selectWeightedRandom(weights, res.totalChance)]++;
 				};
 
 				let entries = Object.entries(freqs);
 				let arr = [];
 				entries.forEach((v) => arr.push(v[1]));
-				console.log(weights);
-				console.log(Math.max.apply(null, arr));
-				console.log(arr.indexOf(Math.max.apply(null, arr)));
-				console.log(entries);
-				console.log(freqs);
 				let winner = entries[arr.indexOf(Math.max.apply(null, arr))][0];
 
 				users.find({"email":winner}).toArray((err, user) => {

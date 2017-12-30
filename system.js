@@ -312,19 +312,17 @@ function alertWinner(jackpot){ /////
 		if(err) throw err;
 		var users = db.collection("users");
 
-		users.aggregate([{$group:{_id:null, totalChance:{$sum:"$chance"}, count:{$sum:1}}}], (err, res) => {
+		users.aggregate([{$group:{_id:null, totalChance:{$sum:"$chance"}, count:{$sum:1}}}], (err, result) => {
 			if(err) throw err;
+			let res = result[0];
 
 			users.find({"chance":{$gt:0}}, {"email":1, "chance":1}).toArray((err, weights) => {
 				if(err) throw err;
 
-				console.log(weights);
-				console.log(res);
-
 				let freqs = {};
 				weights.forEach((v) => freqs[v.email] = 0);
 
-				for (let i = 0; i < 1000; i++) {
+				for (let i = 0; i < res.totalChance+res.count; i++) {
 					freqs[selectWeightedRandom(weights, res.totalChance)]++;
 				};
 

@@ -343,14 +343,15 @@ function alertWinner(jackpot){ /////
 						db.close((err) => {if (err) throw err;});
 					});
 
+					let body = "Winner: "+user[0].name+"\nEmail: "+user[0].email+"\nJackpot: "+(jackpot/100).toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,')+"\n Data: "+JSON.stringify(user[0]);
+
 					let mailOptions = {
-						from: '"nicofox77" <nicofox77@gmail.com>',
+						from: '"Chance" <nicofox77@gmail.com>',
 						to: "n.pinochet@hotmail.com",
-						subject: "Digi Lotto Winner",
-						text:JSON.stringify(user[0])+" jackpot: "+jackpot.toString(),
+						subject: "Chance Lotto Winner",
+						text: body,
 					};
 
-					console.log("Send Email with winner");
 					mailer.sendMail(mailOptions, (error, info) => {
 						if (error) {return console.log(error)};
 						console.log('Message %s sent: %s', info.messageId, info.response);

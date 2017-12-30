@@ -5,8 +5,8 @@ let nodemailer = require('nodemailer');
 let mailer = nodemailer.createTransport({
 	service: "gmail",
 	auth: {
-		user: "nnpinochet@gmail.com",
-		pass: "nico1707"
+		user: "nicofox77@gmail.com",
+		pass: "chanceteam2000"
 	}
 });
 
@@ -344,7 +344,7 @@ function alertWinner(jackpot){ /////
 					});
 
 					let mailOptions = {
-						from: '"Digi Lotto" <node-server@bdigi-lotto.com>',
+						from: '"nicofox77" <nicofox77@gmail.com>',
 						to: "n.pinochet@hotmail.com",
 						subject: "Digi Lotto Winner",
 						text:JSON.stringify(user[0])+" jackpot: "+jackpot.toString(),

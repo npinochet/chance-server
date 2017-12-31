@@ -321,17 +321,7 @@ function alertWinner(jackpot){ /////
 			users.find({"chance":{$gt:0}}, {"email":1, "chance":1}).toArray((err, weights) => {
 				if(err) throw err;
 
-				let freqs = {};
-				weights.forEach((v) => freqs[v.email] = 0);
-
-				for (let i = 0; i < res.totalChance+res.count; i++) {
-					freqs[selectWeightedRandom(weights, res.totalChance)]++;
-				};
-
-				let entries = Object.entries(freqs);
-				let arr = [];
-				entries.forEach((v) => arr.push(v[1]));
-				let winner = entries[arr.indexOf(Math.max.apply(null, arr))][0];
+				let winner = selectWeightedRandom(weights, res.totalChance);
 
 				users.find({"email":winner}).toArray((err, user) => {
 					if(err) throw err;
@@ -343,7 +333,12 @@ function alertWinner(jackpot){ /////
 						db.close((err) => {if (err) throw err;});
 					});
 
-					let body = "Winner: "+user[0].name+"\nEmail: "+user[0].email+"\nJackpot: "+(jackpot/100).toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,')+"\n Data: "+JSON.stringify(user[0]);
+					let body = "Winner: "+user[0].name+
+					"\nEmail: "+user[0].email+
+					"\nJackpot: $"+(jackpot/100).toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,')+
+					"\nChanceSum: "+res.totalChance+
+					"\nUsersThatParticipated: "+res.count+
+					"\nDataWinner: "+JSON.stringify(user[0]);
 
 					let mailOptions = {
 						from: '"Chance" <nicofox77@gmail.com>',
